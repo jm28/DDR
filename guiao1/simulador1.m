@@ -1,31 +1,48 @@
 
-function[bloqueio, mediaOcupacao] = simulador1(l, dm, c, p)
+function[bloqueio, iconfbloq, mediaOcupacao, iconfocup] = simulador1(l, dm, c, p)
 
 chamadas = [];
-bloqueadas = 0;
-ocupacao = 0;
+sbloqueio = [];
+socupacao = [];
 nchamadas = 0;
 l = l/60;
 
 while nchamadas < p,
-    [chamadas, bloqueadas, ocupacao] = step1(l, dm, c, chamadas, bloqueadas, ocupacao);
+    [chamadas, bloqueadas, ocupacao] = simular(l, dm, c, chamadas);
+    sbloqueio = [sbloqueio bloqueadas];
+    socupacao = [socupacao ocupacao];
     nchamadas = nchamadas + 1;
 end
 
-bloqueio = bloqueadas/p;
-mediaOcupacao = ocupacao/p;
+[bloqueio, iconfbloq, mediaOcupacao, iconfocup] = intervalo(sbloqueio, socupacao,p);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function[chamadas, bloqueadas, ocupacao] = step1(l, dm, c, chamadas, bloqueadas, ocupacao)
+% Função para cálculo da média e do intervalo de confiança   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function[mediabloqueio, iconfbloq, mediaocupacao, iconfocup] = intervalo(sbloqueio, socupacao, p)
+
+mediabloqueio = mean(sbloqueio);
+mediaocupacao = mean(socupacao);
+
+variancebloqueio = var(sbloqueio);
+varianceocupacao = var(socupacao);
+
+iconfbloq = norminv(0.95) * sqrt(variancebloqueio/p);
+iconfocup = norminv(0.95) * sqrt(varianceocupacao/p);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function[chamadas, bloqueadas, ocupacao] = simular(l, dm, c, chamadas)
 
 tchamada = exprnd(1/l); %% evento de chegada
 
 chamadas = chamadas - tchamada; %% retirar o tempo que passou
 chamadas = chamadas(chamadas>0); %% retirar chamadas terminadas
-ocupacao=ocupacao+size(chamadas, 2); %% actualizar ocupacao
+ocupacao = size(chamadas, 2); %% actualizar ocupacao
 
-if size(chamadas, 2)<c
+if size(chamadas, 2) < c
     chamadas = [chamadas exprnd(dm)];
+    bloqueadas = 0;
 else
-    bloqueadas = bloqueadas + 1;
+    bloqueadas =  1;
 end
