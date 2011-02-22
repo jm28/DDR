@@ -8,7 +8,7 @@ socupacao = [];
 i = 0;
 
 while i < ncorrida
-    [bloqueio mediaOcupacao] = simulador1(l, dm, c, n, p);
+    [bloqueio mediaOcupacao] = simulador3(l, dm, c, n, p);
     sbloqueio = [sbloqueio bloqueio];
     socupacao = [socupacao mediaOcupacao];
     i = i +1;
@@ -24,7 +24,7 @@ iconfbloq = norminv(0.95) * sqrt(variancebloqueio/ncorrida);
 iconfocup = norminv(0.95) * sqrt(varianceocupacao/ncorrida);
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function[bloqueio, mediaOcupacao] = simulador1(l, dm, c, n, p)
+function[bloqueio, mediaOcupacao] = simulador3(l, dm, c, n, p)
 bloqueadas = 0;
 estado = zeros(n);
 ocupacao = 0;
@@ -37,7 +37,7 @@ chamadas = [exprnd(1/l) 0 sort(nos(1:2))]; %% evento de chegada
 ultimoevento = 0;
 
 while nchamadas < p,
-    chamadas = sortrows(chamadas);
+    chamadas = sortrows(chamadas)
     pnos = chamadas(1,3:4);
     chamadaproc = chamadas(1,1);
     
@@ -57,8 +57,8 @@ while nchamadas < p,
             caminhos = setdiff(lnos, pnos); % retirar par origem e destino da lista de nos
             caminho = melhorcaminho(estado,c,pnos,caminhos);
             
-            if caminho == []
-                bloqueadas = bloqueadas + 1;
+            if caminho ==  -1
+                bloqueadas = bloqueadas + 1
             else
                 orint = sort([pnos(1), caminho]);
                 intdest = sort([pnos(2), caminho]);
@@ -66,10 +66,10 @@ while nchamadas < p,
                 estado(intdest(1), intdest(2)) = estado(intdest(1), intdest(2)) + 1;
                 tempo = (chamadaproc + exprnd(dm));
                 chamadas = [chamadas; tempo 1 orint; tempo 1 intdest]; %%agendar partida
-            end
-            nos = randperm(n);
-            chamadas = [chamadas; (chamadaproc + exprnd(1/l)) 0 sort(nos(1:2))];
+            end    
         end
+        nos = randperm(n);
+        chamadas = [chamadas; (chamadaproc + exprnd(1/l)) 0 sort(nos(1:2))];
         ultimoevento = chamadaproc;
     end
     
@@ -82,20 +82,20 @@ function caminho  = melhorcaminho(estado, c, pnos, nos) %no1 tem de ser menor qu
 caminhos=[];
 
 for i = 1:size(nos)
-    orint = sort([pnos(1), caminhos(i)]);
-    intdest = sort([pnos(2), caminhos(i)]);
+    orint = sort([pnos(1), nos(i)]);
+    intdest = sort([pnos(2), nos(i)]);
     e1 =estado(orint(1), orint(2));
     e2 = estado(intdest(1), intdest(2));
     
     if e1 < c && e2 < c
-        caminhos = [caminhos; caminhos(i) e1+e2];
+        caminhos = [caminhos; nos(i) e1+e2];
     end
 end
 
-caminhos = sortrows(caminhos, 2);
 if size(caminhos)> 0
+    caminhos = sortrows(caminhos, 2);
     caminho = caminhos(1);
 else
-    caminho = [];
+    caminho = -1;
 end
 end
