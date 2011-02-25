@@ -26,76 +26,92 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function[bloqueio, mediaOcupacao] = simulador3(l, dm, c, n, p)
 bloqueadas = 0;
-estado = zeros(n);
+eventos = [];
+estados = zeros(n);
 ocupacao = 0;
-lnos = 1:n;
 nchamadas = 0;
-l = l/60;
-nos = randperm(n);
+l = 60/l;
 
-chamadas = [exprnd(1/l) 0 sort(nos(1:2))]; %% evento de chegada
-ultimoevento = 0;
+for i = 1:n-1
+    for j = i+1:n
+        eventos = [eventos; exprnd(l) 0 i j]; %% evento de chegada
+    end
+end
+
+tempoUltevento = 0;
 
 while nchamadas < p,
-    chamadas = sortrows(chamadas)
-    pnos = chamadas(1,3:4);
-    chamadaproc = chamadas(1,1);
+    eventos = sortrows(eventos);
+    pnos = eventos(1,3:4); % par dos nós em que o eventos vai ser processado
+    tempochamadaproc = eventos(1,1);
     
-    if chamadas(1,2) == 1 % é uma partida
-        chamadas(1,:) = []; % retirar evento
-        ocupacao = ocupacao + (chamadaproc-ultimoevento)*sum(sum(estado));
-        estado(pnos(1), pnos(2)) = estado(pnos(1), pnos(2)) - 1;
+    if eventos(1,2) == 1 % é uma partida
+        eventos(1,:) = []; % retirar evento
+        ocupacao = ocupacao + (tempochamadaproc-tempoUltevento)*sum(sum(estados));
+        estados(pnos(1), pnos(2)) = estados(pnos(1), pnos(2)) - 1;
     else
-        chamadas(1,:) = []; % retirar evento
-        ocupacao = ocupacao + (chamadaproc-ultimoevento)*sum(sum(estado));
+        eventos(1,:) = []; % retirar evento
+        ocupacao = ocupacao + (tempochamadaproc-tempoUltevento)*sum(sum(estados));
         nchamadas = nchamadas + 1;
         
-        if estado(pnos(1), pnos(2)) < c %% acesso directo
-            estado(pnos(1), pnos(2)) = estado(pnos(1), pnos(2)) + 1;
-            chamadas = [chamadas; (chamadaproc + exprnd(dm)) 1 pnos]; %%agendar partida
+        if estados(pnos(1), pnos(2)) < c %% acesso directo
+            estados(pnos(1), pnos(2)) = estados(pnos(1), pnos(2)) + 1;
+            eventos = [eventos; (tempochamadaproc + exprnd(dm)) 1 pnos]; %%agendar partida
         else
-            caminhos = setdiff(lnos, pnos); % retirar par origem e destino da lista de nos
-            caminho = melhorcaminho(estado,c,pnos,caminhos);
+            caminho = melhorcaminho(estados,c,pnos, 1:n); % calcular o melhor caminho possível
             
             if caminho ==  -1
-                bloqueadas = bloqueadas + 1
+                bloqueadas = bloqueadas + 1;
             else
-                orint = sort([pnos(1), caminho]);
-                intdest = sort([pnos(2), caminho]);
-                estado(orint(1), orint(2)) = estado(orint(1), orint(2)) + 1;
-                estado(intdest(1), intdest(2)) = estado(intdest(1), intdest(2)) + 1;
-                tempo = (chamadaproc + exprnd(dm));
-                chamadas = [chamadas; tempo 1 orint; tempo 1 intdest]; %%agendar partida
-            end    
+                orint = sort([pnos(1), caminho]); % canal origem -> intermedio
+                intdest = sort([pnos(2), caminho]); % canal intermedio -> destino
+                estados(orint(1), orint(2)) = estados(orint(1), orint(2)) + 1;
+                estados(intdest(1), intdest(2)) = estados(intdest(1), intdest(2)) + 1;
+                tempo = (tempochamadaproc + exprnd(dm)); %% tempo de agendamento das partidas
+                eventos = [eventos; tempo 1 orint; tempo 1 intdest]; %%agendar partida
+            end
         end
-        nos = randperm(n);
-        chamadas = [chamadas; (chamadaproc + exprnd(1/l)) 0 sort(nos(1:2))];
-        ultimoevento = chamadaproc;
+        eventos = [eventos; (tempochamadaproc + exprnd(l)) 0 pnos]; % agendar chegada para o par de nós processado
+        tempoUltevento = tempochamadaproc;
     end
     
-    bloqueio = bloqueadas/p;
-    mediaOcupacao = ocupacao/chamadaproc;
 end
+    bloqueio = bloqueadas/p;
+    mediaOcupacao = (ocupacao/tempochamadaproc)/(n*(n-1)/2);
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function caminho  = melhorcaminho(estado, c, pnos, nos) %no1 tem de ser menor que no2
-caminhos=[];
+function caminho  = melhorcaminho(estado, c, pnos, totalnos)
+caminho = -1;
+intermedios = setdiff(totalnos, pnos); % retirar par origem e destino da lista de nos
+cargas = [];
 
-for i = 1:size(nos)
-    orint = sort([pnos(1), nos(i)]);
-    intdest = sort([pnos(2), nos(i)]);
-    e1 =estado(orint(1), orint(2));
-    e2 = estado(intdest(1), intdest(2));
+
+if size(intermedios) > 0
+    for i = 1:size(intermedios)
+        orint = sort([pnos(1), intermedios(i)]);
+        intdest = sort([pnos(2), intermedios(i)]);
+        e1 = classificarLigacao(c, estado(orint(1), orint(2)));
+        e2 = classificarLigacao(c, estado(intdest(1), intdest(2)));
+        cargas = [cargas; intermedios(i) max(e1,e2)];
+    end
     
-    if e1 < c && e2 < c
-        caminhos = [caminhos; nos(i) e1+e2];
+    if size(cargas)> 0
+        cargas = sortrows(cargas, 2);
+        if cargas(1) < c
+            caminho = cargas(1);
+        end
     end
 end
+end
 
-if size(caminhos)> 0
-    caminhos = sortrows(caminhos, 2);
-    caminho = caminhos(1);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function classificacao = classificarLigacao(c, ncircuitos)
+
+if ncircuitos <= c/2
+    classificacao = 0; % CR
+elseif ncircuitos > c/2 && ncircuitos < c
+    classificacao = 1; % CE
 else
-    caminho = -1;
+    classificacao = 2; % OC
 end
 end
