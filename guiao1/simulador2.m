@@ -78,9 +78,10 @@ while nchamadas < p,
     elseif nchamadas == 200
         bloqueadas = 0;
         ocupacao = 0;
+        ult200 = ultimoevento;
     elseif nchamadas == 220
-        bloqueio2 = bloqueadas/nchamadas; %calcular probabilidade de bloqueio
-        mediaOcupacao2 = ocupacao/ultimoevento; %calcular ocupação média
+        bloqueio2 = bloqueadas/20; %calcular probabilidade de bloqueio
+        mediaOcupacao2 = ocupacao/(ultimoevento-ult200); %calcular ocupação média
     end
 end
 

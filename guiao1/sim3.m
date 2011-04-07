@@ -13,7 +13,6 @@ while i < ncorrida
     socupacao = [socupacao mediaOcupacao];
     i = i +1;
 end
-
 mediabloqueio = mean(sbloqueio);
 mediaocupacao = mean(socupacao);
 
@@ -41,7 +40,7 @@ sumestados= 0;
 tempoUltevento = 0;
 
 while nchamadas < p,
-    eventos = sortrows(eventos)
+    eventos = sortrows(eventos);
     pnos = eventos(1,3:4); % par dos nós em que o eventos vai ser processado
     tempochamadaproc = eventos(1,1);
     
@@ -60,7 +59,7 @@ while nchamadas < p,
             sumestados= sumestados+1;
             eventos = [eventos; (tempochamadaproc + exprnd(dm)) 1 pnos]; %%agendar partida
         else
-            caminho = melhorcaminho(estados,c,pnos, 1:n) % calcular o melhor caminho possível
+            caminho = melhorcaminho(estados,c,pnos, 1:n); % calcular o melhor caminho possível
             
             if caminho ==  -1
                 bloqueadas = bloqueadas + 1;
@@ -91,7 +90,7 @@ numNos = size(intermedios);
 
 
 if numNos > 0
-    for i = 1:numNos
+    for i = 1:numNos(2)
         orint = sort([pnos(1), intermedios(i)]);
         intdest = sort([pnos(2), intermedios(i)]);
         e1 = classificarLigacao(c, estado(orint(1), orint(2)));
@@ -99,17 +98,17 @@ if numNos > 0
         cargas = [cargas; intermedios(i) max(e1,e2)];
     end
     tamanhocargas = size(cargas);
-    if tamanhocargas > 0
+    if tamanhocargas(2) > 0
         cargas = sortrows(cargas, 2);
-        if cargas(1) < c    
+        if cargas(1,2) < 2    
             ncaminhos = 0;
-            carga = cargas(1);
-            for i = 2:tamanhocargas
-                if cargas(i) == carga
+            carga = cargas(1,2);
+            for i = 2:tamanhocargas(2)
+                if cargas(i,2) == carga
                 	ncaminhos = ncaminhos + 1;
                 end
             end
-            caminho = cargas(floor((rand(1,1) * ncaminhos) + 1));
+            caminho = cargas(floor((rand(1,1) * ncaminhos) + 1),1);
         end
     end
 end

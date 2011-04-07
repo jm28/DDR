@@ -1,0 +1,13 @@
+
+function[atrMed, ocupMedFE, taxaPerda] = vteoricosMM1(l, tamMax, tamMin, capL)
+   
+    medPacotes = ((tamMax+tamMin)/2); %%esta bem
+    mju = capL/medPacotes; %%esta bem
+    
+    atrMed = 1/(mju-l);%%esta bem
+    %%ocupMedFE = (l / (mju-l))*medPacotes;
+    ocupMedFE = ((l^2)/(mju*(mju-l))*(medPacotes);
+    %%pacotesF = (f*8)/medPacotes;
+    %%taxaPerda = (l/mju)^pacotesF;
+    taxaPerda = 0; %%M/M/1 considera uma fila de espera infinita
+end

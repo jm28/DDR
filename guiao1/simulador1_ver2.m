@@ -24,6 +24,8 @@ iconfbloq = norminv(0.95) * sqrt(variancebloqueio/ncorrida);
 iconfocup = norminv(0.95) * sqrt(varianceocupacao/ncorrida);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%       Simulação com os parâmetros obtidos                              %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function[bloqueio, mediaOcupacao] = simulador1(l, dm, c, p)
 bloqueadas = 0;
 estadoLigacoes = 0;
@@ -36,8 +38,7 @@ tempoultimoevento = 0;
 
 while nchamadas < p,
     
-   eventos = sortrows(eventos); 
-   
+   eventos = sortrows(eventos);  
    tempoEventoproc = eventos(1,1); %tempo do evento que vai ser processado
    
    if eventos(1,2) == 1 % é uma partida 
